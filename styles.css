@@ -37,6 +37,7 @@ body{
   border-radius: 14px;
   padding: 16px;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .form{display:flex; flex-direction:column; gap:14px}
@@ -95,11 +96,16 @@ body{
 
 .status{margin:2px 0 0; color:var(--muted)}
 
+/* ===== تقرير PDF ===== */
 .report{
   background: white;
   color: #111;
   border-radius: 10px;
   padding: 16px;
+
+  /* مهم للـ PDF: نخليه بعرض منطقي */
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .reportHeader{
@@ -155,9 +161,10 @@ body{
 
 .imgTitle{font-weight:900; margin-bottom: 8px}
 
+/* مهم: قللي ارتفاع الصور حتى لا تكبر في PDF */
 .imgBox img{
   width:100%;
-  height: 260px;
+  height: 180px;           /* كان 260 */
   object-fit: contain;
   border-radius: 10px;
   background: #fff;
@@ -180,4 +187,10 @@ body{
   gap:12px;
   color:#666;
   font-size: 12px;
+}
+
+/* ===== وضع التصدير (Safari): نلغي المؤثرات التي قد تخفي النص ===== */
+.exporting .card{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
