@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>نموذج بيانات موظف + تصدير PDF</title>
+  <title>نموذج موظف + تصدير PDF</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <main class="container">
     <header class="header">
       <h1>نموذج بيانات موظف</h1>
-      <p class="sub">أدخل البيانات وارفع صورتين ثم صدّر النتيجة إلى PDF.</p>
+      <p class="sub">ادخلي البيانات وارفعِي صورتين ثم صدّري التقرير إلى PDF.</p>
     </header>
 
     <section class="card">
@@ -18,40 +19,40 @@
         <div class="grid">
           <label class="field">
             <span>اسم الموظف</span>
-            <input id="empName" name="empName" type="text" placeholder="مثال: أمل الدوسري" required />
+            <input id="empName" type="text" placeholder="مثال: أمل الدوسري" required />
           </label>
 
           <label class="field">
             <span>رقم الموظف</span>
-            <input id="empId" name="empId" type="text" inputmode="numeric" placeholder="مثال: 12345" required />
+            <input id="empId" type="text" inputmode="numeric" placeholder="مثال: 12345" required />
           </label>
         </div>
 
         <div class="grid">
           <label class="field">
             <span>رفع الصورة الأولى</span>
-            <input id="img1" name="img1" type="file" accept="image/*" required />
+            <input id="img1" type="file" accept="image/*" required />
             <small>يفضل JPG/PNG وبحجم معقول.</small>
           </label>
 
           <label class="field">
             <span>رفع الصورة الثانية</span>
-            <input id="img2" name="img2" type="file" accept="image/*" required />
+            <input id="img2" type="file" accept="image/*" required />
             <small>يفضل JPG/PNG وبحجم معقول.</small>
           </label>
         </div>
 
         <div class="actions">
           <button type="button" id="previewBtn" class="btn secondary">تحديث المعاينة</button>
-          <button type="button" id="exportBtn" class="btn">تصدير إلى PDF</button>
+          <button type="button" id="exportBtn" class="btn">تصدير PDF</button>
         </div>
 
         <p id="status" class="status" aria-live="polite"></p>
       </form>
     </section>
 
-    <!-- هذا القسم هو الذي سنحوّله إلى PDF -->
-    <section class="card" aria-label="المعاينة">
+    <!-- هذا الجزء هو الذي سيتم تصديره إلى PDF -->
+    <section class="card">
       <div id="report" class="report">
         <div class="reportHeader">
           <div>
@@ -66,6 +67,7 @@
             <div class="label">اسم الموظف</div>
             <div id="rName" class="value">—</div>
           </div>
+
           <div class="row">
             <div class="label">رقم الموظف</div>
             <div id="rId" class="value">—</div>
@@ -74,30 +76,31 @@
           <div class="images">
             <figure class="imgBox">
               <div class="imgTitle">الصورة الأولى</div>
-              <img id="rImg1" alt="معاينة الصورة الأولى" />
-              <div class="imgHint">—</div>
+              <img id="rImg1" alt="الصورة الأولى" />
+              <div class="imgHint" id="hint1">—</div>
             </figure>
 
             <figure class="imgBox">
               <div class="imgTitle">الصورة الثانية</div>
-              <img id="rImg2" alt="معاينة الصورة الثانية" />
-              <div class="imgHint">—</div>
+              <img id="rImg2" alt="الصورة الثانية" />
+              <div class="imgHint" id="hint2">—</div>
             </figure>
           </div>
         </div>
 
         <footer class="reportFooter">
-          <span>ملاحظة: تأكد أن الصور واضحة قبل التصدير.</span>
+          <span>ملاحظة: تأكدي من وضوح الصور قبل التصدير.</span>
           <span id="rDate"></span>
         </footer>
       </div>
     </section>
   </main>
 
-  <!-- مكتبات التصدير -->
+  <!-- مكتبات التصدير (لا تغيّري ترتيبها) -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
+  <!-- كودك -->
   <script src="script.js"></script>
 </body>
 </html>
