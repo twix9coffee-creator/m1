@@ -1,3 +1,4 @@
+/* ===== عناصر الصفحة ===== */
 const statusEl = document.getElementById("status");
 
 const empName = document.getElementById("empName");
@@ -17,10 +18,11 @@ const previewBtn = document.getElementById("previewBtn");
 const exportBtn = document.getElementById("exportBtn");
 const report = document.getElementById("report");
 
-// نخزن صور مصغرة هنا بدل الاعتماد على الملف الأصلي الضخم
+/* نخزن النسخ المصغرة من الصور */
 let resizedDataUrl1 = null;
 let resizedDataUrl2 = null;
 
+/* ===== أدوات مساعدة ===== */
 function setStatus(msg) {
   statusEl.textContent = msg || "";
 }
@@ -34,9 +36,9 @@ function validateForm() {
 }
 
 /**
- * تصغير + ضغط الصور قبل استخدامها (مهم جدًا للـ PDF)
- * maxSide: أكبر ضلع (عرض/ارتفاع)
- * quality: جودة JPEG (0-1)
+ * تصغير + ضغط الصورة لتقليل الحجم في التقرير والـ PDF
+ * maxSide: أقصى ضلع (عرض/ارتفاع)
+ * quality: جودة JPEG
  */
 function resizeImageToDataURL(file, maxSide = 1200, quality = 0.82) {
   return new Promise((resolve, reject) => {
@@ -47,8 +49,6 @@ function resizeImageToDataURL(file, maxSide = 1200, quality = 0.82) {
       img.onerror = () => reject(new Error("تعذر تحميل الصورة"));
       img.onload = () => {
         let { width, height } = img;
-
-        // حساب نسبة التصغير
         const scale = Math.min(1, maxSide / Math.max(width, height));
         const newW = Math.round(width * scale);
         const newH = Math.round(height * scale);
@@ -58,15 +58,12 @@ function resizeImageToDataURL(file, maxSide = 1200, quality = 0.82) {
         canvas.height = newH;
 
         const ctx = canvas.getContext("2d");
-        // خلفية بيضاء لتفادي شفافية غريبة
+        // خلفية بيضاء حتى لا تظهر شفافية غريبة
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, newW, newH);
-
         ctx.drawImage(img, 0, 0, newW, newH);
 
-        // نحولها JPEG مضغوط
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
       img.src = String(reader.result);
     };
@@ -74,12 +71,13 @@ function resizeImageToDataURL(file, maxSide = 1200, quality = 0.82) {
   });
 }
 
+/* ===== تحديث المعاينة ===== */
 async function updatePreview() {
   rName.textContent = empName.value.trim() || "—";
   rId.textContent = empId.value.trim() || "—";
   rDate.textContent = new Date().toLocaleString("ar-SA");
 
-  // الصورة الأولى: إن لم نجهزها بعد، جهزيها
+  // الصورة الأولى
   if (img1.files && img1.files[0]) {
     if (!resizedDataUrl1) {
       resizedDataUrl1 = await resizeImageToDataURL(img1.files[0], 1200, 0.82);
@@ -110,12 +108,10 @@ async function updatePreview() {
   }
 }
 
+/* ===== تصدير PDF (حل Safari + عربي) ===== */
 async function exportPDF() {
   const err = validateForm();
-  if (err) {
-    setStatus(err);
-    return;
-  }
+  if (err) { setStatus(err); return; }
 
   if (!window.html2canvas) {
     setStatus("مكتبة html2canvas لم تُحمّل. تأكدي من اتصال الإنترنت.");
@@ -128,68 +124,81 @@ async function exportPDF() {
 
   exportBtn.disabled = true;
   previewBtn.disabled = true;
-  setStatus("جارٍ تجهيز المعاينة وإنشاء PDF…");
+  setStatus("جارٍ إنشاء PDF…");
 
-  // نفعل وضع التصدير (يلغي backdrop-filter أثناء الالتقاط)
+  // وضع التصدير: يلغي مؤثرات قد تخفي النص في Safari
   document.body.classList.add("exporting");
 
   try {
-    // تأكدي أن الصور مصغرة قبل الالتقاط
     await updatePreview();
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
-
-    await doc.html(report, {
-      x: 10,
-      y: 10,
-      width: 190,
-      windowWidth: report.scrollWidth,
-
-      html2canvas: {
-        scale: 1.5,               // جودة معقولة بدون تضخيم
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          // هذا الجزء “يضبط” Safari: نلغي المؤثرات في النسخة الملتقطة فقط
-          clonedDoc.body.classList.add("exporting");
-
-          const cards = clonedDoc.querySelectorAll(".card");
-          cards.forEach((c) => {
-            c.style.backdropFilter = "none";
-            c.style.webkitBackdropFilter = "none";
-          });
-
-          // احتياط: تأكد خلفية التقرير بيضاء
-          const clonedReport = clonedDoc.getElementById("report");
-          if (clonedReport) clonedReport.style.background = "#ffffff";
-        }
-      },
-
-      callback: function (doc) {
-        const safeName = (empName.value.trim() || "employee")
-          .replace(/[^\w\u0600-\u06FF-]+/g, "_");
-        const filename = `employee_${safeName}.pdf`;
-
-        // تنزيل متوافق مع Safari
-        const blob = doc.output("blob");
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        URL.revokeObjectURL(url);
+    // 1) التقط التقرير كصورة (Canvas) — يحافظ على العربية كما تظهر على الشاشة
+    const canvas = await html2canvas(report, {
+      scale: 2,                  // جودة أعلى (لو صار بطيء خليها 1.5)
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      onclone: (clonedDoc) => {
+        clonedDoc.body.classList.add("exporting");
+        const cards = clonedDoc.querySelectorAll(".card");
+        cards.forEach(c => {
+          c.style.backdropFilter = "none";
+          c.style.webkitBackdropFilter = "none";
+        });
+        const clonedReport = clonedDoc.getElementById("report");
+        if (clonedReport) clonedReport.style.background = "#ffffff";
       }
     });
 
-    setStatus("تم إنشاء ملف PDF وتنزيله.");
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+    // 2) إنشاء PDF A4
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 10;
+
+    const usableWidth = pageWidth - margin * 2;
+    const usableHeight = pageHeight - margin * 2;
+
+    const imgWidth = usableWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    // 3) إذا المحتوى أطول من صفحة: نوزعه على صفحات بدون قص النص
+    let heightLeft = imgHeight;
+
+    pdf.addImage(imgData, "JPEG", margin, margin, imgWidth, imgHeight);
+    heightLeft -= usableHeight;
+
+    while (heightLeft > 0) {
+      pdf.addPage();
+      const y = margin - (imgHeight - heightLeft);
+      pdf.addImage(imgData, "JPEG", margin, y, imgWidth, imgHeight);
+      heightLeft -= usableHeight;
+    }
+
+    // 4) تنزيل متوافق مع Safari
+    const safeName = (empName.value.trim() || "employee")
+      .replace(/[^\w\u0600-\u06FF-]+/g, "_");
+    const filename = `employee_${safeName}.pdf`;
+
+    const blob = pdf.output("blob");
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+    setStatus("تم إنشاء PDF وتنزيله بنجاح.");
   } catch (e) {
     console.error(e);
-    setStatus("صار خطأ أثناء التصدير. جرّبي صور أصغر أو حدّثي الصفحة.");
+    setStatus("حدث خطأ أثناء التصدير. جرّبي صور أصغر أو خفّضي scale.");
   } finally {
     document.body.classList.remove("exporting");
     exportBtn.disabled = false;
@@ -197,7 +206,7 @@ async function exportPDF() {
   }
 }
 
-// أزرار
+/* ===== ربط الأزرار ===== */
 previewBtn.addEventListener("click", async () => {
   setStatus("");
   try {
@@ -211,9 +220,9 @@ previewBtn.addEventListener("click", async () => {
 
 exportBtn.addEventListener("click", exportPDF);
 
-// عند تغيير الصور: صفري النسخ المصغرة ليعاد تجهيزها
+/* عند تغيير الصور: صفري النسخ المصغرة ليعاد تجهيزها */
 img1.addEventListener("change", () => { resizedDataUrl1 = null; setStatus(""); });
 img2.addEventListener("change", () => { resizedDataUrl2 = null; setStatus(""); });
 
-// تنظيف رسائل عند الكتابة
+/* تنظيف الرسائل عند الكتابة */
 [empName, empId].forEach(el => el.addEventListener("input", () => setStatus("")));
